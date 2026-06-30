@@ -1,0 +1,122 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Terminal One — Bloomberg-grade dark trading terminal aesthetic */
+@theme inline {
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 6px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-bull: var(--bull);
+  --color-bear: var(--bear);
+  --color-warn: var(--warn);
+  --color-amber: var(--amber);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-grid: var(--grid);
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+:root {
+  --radius: 0.25rem;
+  /* Deep terminal black with subtle blue undertone */
+  --background: oklch(0.13 0.012 250);
+  --foreground: oklch(0.96 0.005 230);
+  --surface: oklch(0.165 0.014 250);
+  --surface-2: oklch(0.205 0.016 250);
+  --card: oklch(0.165 0.014 250);
+  --card-foreground: oklch(0.96 0.005 230);
+  --popover: oklch(0.18 0.014 250);
+  --popover-foreground: oklch(0.96 0.005 230);
+  --primary: oklch(0.78 0.18 75);            /* terminal amber */
+  --primary-foreground: oklch(0.15 0.015 250);
+  --amber: oklch(0.78 0.18 75);
+  --secondary: oklch(0.25 0.018 250);
+  --secondary-foreground: oklch(0.96 0.005 230);
+  --muted: oklch(0.22 0.014 250);
+  --muted-foreground: oklch(0.65 0.018 240);
+  --accent: oklch(0.28 0.02 250);
+  --accent-foreground: oklch(0.96 0.005 230);
+  --bull: oklch(0.74 0.19 145);              /* gain green */
+  --bear: oklch(0.66 0.24 25);               /* loss red */
+  --warn: oklch(0.78 0.17 70);
+  --destructive: oklch(0.62 0.24 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.27 0.015 250);
+  --grid: oklch(0.23 0.014 250);
+  --input: oklch(0.22 0.014 250);
+  --ring: oklch(0.78 0.18 75);
+}
+
+.dark {
+  --background: oklch(0.13 0.012 250);
+  --foreground: oklch(0.96 0.005 230);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  *::-webkit-scrollbar { display: none; }
+  html, body { background-color: var(--color-background); color: var(--color-foreground); }
+  body {
+    font-family: var(--font-mono);
+    font-feature-settings: "tnum", "ss01";
+    background-image:
+      linear-gradient(var(--color-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+    background-size: 48px 48px;
+    background-position: -1px -1px;
+  }
+}
+
+@utility ticker-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  font-variant-numeric: tabular-nums;
+}
+
+@utility pulse-dot {
+  position: relative;
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: var(--color-bull);
+  box-shadow: 0 0 0 0 var(--color-bull);
+  animation: pulse-ring 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 oklch(0.74 0.19 145 / 0.55); }
+  70%  { box-shadow: 0 0 0 8px oklch(0.74 0.19 145 / 0); }
+  100% { box-shadow: 0 0 0 0 oklch(0.74 0.19 145 / 0); }
+}
