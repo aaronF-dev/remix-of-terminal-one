@@ -1,3 +1,4 @@
+import { getAiOverride } from "@/lib/ai-override";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
