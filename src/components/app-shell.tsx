@@ -9,6 +9,7 @@ import {
   Dna,
   Gauge,
   History,
+  KeyRound,
   LogOut,
   Menu,
   Newspaper,
