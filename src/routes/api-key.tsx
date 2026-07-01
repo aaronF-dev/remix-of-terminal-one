@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Check, Eye, EyeOff, KeyRound, Loader2, Send, Trash2 } from "lucide-react";
+import { Check, Eye, EyeOff, KeyRound, Loader2, Send, Trash2, Zap } from "lucide-react";
+import { GROQ_LS_ENABLED, GROQ_LS_KEY, GROQ_LS_MODEL } from "@/lib/ai-override";
 
 export const Route = createFileRoute("/api-key")({
   component: ApiKeyPage,
@@ -32,8 +33,9 @@ const GROQ_MODELS = [
   "qwen/qwen3.6-27b",
 ] as const;
 
-const LS_KEY = "t1.groq.apiKey";
-const LS_MODEL = "t1.groq.model";
+const LS_KEY = GROQ_LS_KEY;
+const LS_MODEL = GROQ_LS_MODEL;
+const LS_ENABLED = GROQ_LS_ENABLED;
 
 type ChatMsg = { role: "user" | "assistant" | "system"; content: string };
 
