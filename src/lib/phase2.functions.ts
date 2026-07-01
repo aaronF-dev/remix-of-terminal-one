@@ -63,7 +63,9 @@ export type AskAnswer = z.infer<typeof AskAnswerSchema>;
 
 export const askAnything = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) =>
-    z.object({ query: z.string().min(2).max(400) }).parse(raw),
+    z
+      .object({ query: z.string().min(2).max(400), aiOverride: AiOverrideSchema.optional() })
+      .parse(raw),
   )
   .handler(async ({ data }): Promise<{
     answer: AskAnswer;
