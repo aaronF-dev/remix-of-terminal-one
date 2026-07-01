@@ -45,6 +45,7 @@ function ApiKeyPage() {
   const [model, setModel] = useState<string>(GROQ_MODELS[3]);
   const [showKey, setShowKey] = useState(false);
   const [savedNote, setSavedNote] = useState(false);
+  const [useForApp, setUseForApp] = useState(false);
 
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
@@ -56,11 +57,13 @@ function ApiKeyPage() {
     try {
       const k = localStorage.getItem(LS_KEY);
       const m = localStorage.getItem(LS_MODEL);
+      const e = localStorage.getItem(LS_ENABLED);
       if (k) {
         setSavedKey(k);
         setApiKey(k);
       }
       if (m && (GROQ_MODELS as readonly string[]).includes(m)) setModel(m);
+      if (e === "1") setUseForApp(true);
     } catch {
       /* ignore */
     }
@@ -88,12 +91,24 @@ function ApiKeyPage() {
     try {
       localStorage.removeItem(LS_KEY);
       localStorage.removeItem(LS_MODEL);
+      localStorage.removeItem(LS_ENABLED);
     } catch {
       /* ignore */
     }
     setSavedKey(null);
     setApiKey("");
+    setUseForApp(false);
     setMessages([]);
+  }
+
+  function toggleUseForApp(next: boolean) {
+    setUseForApp(next);
+    try {
+      if (next) localStorage.setItem(LS_ENABLED, "1");
+      else localStorage.removeItem(LS_ENABLED);
+    } catch {
+      /* ignore */
+    }
   }
 
   function updateModel(next: string) {
