@@ -9,6 +9,7 @@ import {
   Dna,
   Gauge,
   History,
+  KeyRound,
   LogOut,
   Menu,
   Newspaper,
@@ -30,6 +31,7 @@ const NAV = [
   { to: "/compare", label: "Compare", icon: BarChart3, group: "intel" },
   { to: "/agents", label: "AI Agents", icon: Cpu, group: "system" },
   { to: "/research", label: "Research", icon: History, group: "system" },
+  { to: "/api-key", label: "API Key", icon: KeyRound, group: "system" },
 ] as const;
 
 export function AppShell({
