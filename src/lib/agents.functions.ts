@@ -397,6 +397,7 @@ export const runAgent = createServerFn({ method: "POST" })
         kind: z.enum(AGENT_KINDS),
         symbol: z.string().min(1).max(20),
         name: z.string().optional(),
+        aiOverride: AiOverrideSchema.optional(),
       })
       .parse(raw),
   )
@@ -427,7 +428,7 @@ export const runAgent = createServerFn({ method: "POST" })
     const digest = summarizeSeries(history);
 
     const { system, prompt } = buildPrompt(data.kind, { quote, news: newsForAgent, digest });
-    const parsedRaw = await jsonAI(system, prompt);
+    const parsedRaw = await jsonAI(system, prompt, data.aiOverride);
     const coerced = coerce(data.kind, parsedRaw);
     const schema = SCHEMAS[data.kind];
     const result = schema.parse(coerced);
