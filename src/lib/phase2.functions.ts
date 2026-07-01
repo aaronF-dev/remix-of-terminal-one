@@ -141,7 +141,7 @@ ${
 
 Produce the JSON answer.`;
 
-    const parsed = (await jsonModel(system, prompt)) as Record<string, unknown>;
+    const parsed = (await jsonModel(system, prompt, data.aiOverride)) as Record<string, unknown>;
     const answer = AskAnswerSchema.parse({
       intent: str(parsed.intent, "general"),
       headline: str(parsed.headline, "Result"),
@@ -282,7 +282,11 @@ export type CompanyDNA = z.infer<typeof DnaSchema>;
 export const getCompanyDNA = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) =>
     z
-      .object({ symbol: z.string().min(1).max(20), name: z.string().optional() })
+      .object({
+        symbol: z.string().min(1).max(20),
+        name: z.string().optional(),
+        aiOverride: AiOverrideSchema.optional(),
+      })
       .parse(raw),
   )
   .handler(async ({ data }) => {
@@ -391,7 +395,9 @@ export type RadarResult = z.infer<typeof RadarSchema>;
 
 export const runOpportunityRadar = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) =>
-    z.object({ query: z.string().min(3).max(300) }).parse(raw),
+    z
+      .object({ query: z.string().min(3).max(300), aiOverride: AiOverrideSchema.optional() })
+      .parse(raw),
   )
   .handler(async ({ data }) => {
     const [yahoo, crypto] = await Promise.all([
@@ -484,6 +490,7 @@ export const explainNews = createServerFn({ method: "POST" })
         title: z.string().min(3).max(500),
         url: z.string().optional(),
         source: z.string().optional(),
+        aiOverride: AiOverrideSchema.optional(),
       })
       .parse(raw),
   )
