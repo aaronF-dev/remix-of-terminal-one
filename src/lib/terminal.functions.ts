@@ -267,12 +267,11 @@ export const compareSymbols = createServerFn({ method: "POST" })
     z
       .object({
         symbols: z.array(z.string().min(1).max(20)).min(2).max(4),
+        aiOverride: AiOverrideSchema.optional(),
       })
       .parse(raw),
   )
   .handler(async ({ data }) => {
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
 
     const results = await Promise.all(
       data.symbols.map(async (s) => {
@@ -295,7 +294,7 @@ export const compareSymbols = createServerFn({ method: "POST" })
     }
 
     const fetchedAt = new Date().toISOString();
-    const gateway = createLovableAiGatewayProvider(apiKey);
+    const model = resolveAiModel(data.aiOverride);
 
     const digest = valid.map((v) => ({
       symbol: v.symbol,
