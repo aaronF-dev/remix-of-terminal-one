@@ -178,7 +178,7 @@ export const analyzeSymbol = createServerFn({ method: "POST" })
       .slice(0, 6);
 
     const fetchedAt = new Date().toISOString();
-    const gateway = createLovableAiGatewayProvider(apiKey);
+    const model = resolveAiModel(data.aiOverride);
 
     const historyDigest = summarizeSeries(history);
 
@@ -224,7 +224,7 @@ ${
 Produce the Terminal One analysis JSON for ${quote.name} (${quote.symbol}).`;
 
     const { text } = await generateText({
-      model: gateway("google/gemini-3-flash-preview"),
+      model,
       system: systemPrompt,
       prompt: userPrompt,
     });
