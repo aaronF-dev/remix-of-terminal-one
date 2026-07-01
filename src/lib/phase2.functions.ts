@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
 import { z } from "zod";
-import { createLovableAiGatewayProvider } from "./ai-gateway.server";
+import { resolveAiModel } from "./ai-gateway.server";
+import { AiOverrideSchema, type AiOverride } from "./ai-override";
 import {
   fetchCryptoQuotes,
   fetchYahooQuotes,
@@ -26,17 +27,13 @@ function extractJson(raw: string): unknown {
   }
 }
 
-function gateway() {
-  const apiKey = process.env.LOVABLE_API_KEY;
-  if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
-  return createLovableAiGatewayProvider(apiKey);
-}
-
-const MODEL = "google/gemini-3-flash-preview";
-
-async function jsonModel(system: string, prompt: string): Promise<unknown> {
+async function jsonModel(
+  system: string,
+  prompt: string,
+  override?: AiOverride,
+): Promise<unknown> {
   const { text } = await generateText({
-    model: gateway()(MODEL),
+    model: resolveAiModel(override),
     system,
     prompt,
   });
