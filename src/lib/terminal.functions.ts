@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
 import { z } from "zod";
-import { createLovableAiGatewayProvider } from "./ai-gateway.server";
+import { resolveAiModel } from "./ai-gateway.server";
+import { AiOverrideSchema } from "./ai-override";
 import {
   fetchCryptoQuotes,
   fetchYahooQuotes,
@@ -143,11 +144,15 @@ const AnalysisSchema = z.object({
 
 export const analyzeSymbol = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) =>
-    z.object({ symbol: z.string().min(1).max(20), name: z.string().optional() }).parse(raw),
+    z
+      .object({
+        symbol: z.string().min(1).max(20),
+        name: z.string().optional(),
+        aiOverride: AiOverrideSchema.optional(),
+      })
+      .parse(raw),
   )
   .handler(async ({ data }) => {
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
 
     const [quote, news, history] = await Promise.all([
       fetchYahooSymbol(data.symbol, data.name),
