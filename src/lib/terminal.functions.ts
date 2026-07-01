@@ -336,7 +336,7 @@ ${JSON.stringify(digest, null, 2)}
 Produce the comparison JSON.`;
 
     const { text } = await generateText({
-      model: gateway("google/gemini-3-flash-preview"),
+      model,
       system: systemPrompt,
       prompt: userPrompt,
     });
