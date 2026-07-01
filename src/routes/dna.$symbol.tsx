@@ -37,7 +37,7 @@ function DnaPage() {
   });
 
   const mutation = useMutation({
-    mutationFn: () => dnaFn({ data: { symbol, name } }),
+    mutationFn: () => dnaFn({ data: { symbol, name, aiOverride: getAiOverride() } }),
   });
 
   useEffect(() => {

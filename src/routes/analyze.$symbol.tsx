@@ -41,7 +41,7 @@ function AnalyzePage() {
   const analyzeFn = useServerFn(analyzeSymbol);
 
   const mut = useMutation({
-    mutationFn: () => analyzeFn({ data: { symbol, name } }),
+    mutationFn: () => analyzeFn({ data: { symbol, name, aiOverride: getAiOverride() } }),
   });
 
   // auto-trigger on mount / symbol change

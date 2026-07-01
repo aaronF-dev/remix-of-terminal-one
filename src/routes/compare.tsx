@@ -62,7 +62,7 @@ function ComparePage() {
   const quotes = snapshot.data?.data ?? [];
 
   const mut = useMutation({
-    mutationFn: (syms: string[]) => compareFn({ data: { symbols: syms } }),
+    mutationFn: (syms: string[]) => compareFn({ data: { symbols: syms, aiOverride: getAiOverride() } }),
   });
 
   useEffect(() => {

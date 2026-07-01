@@ -44,7 +44,7 @@ function AskPage() {
   const [query, setQuery] = useState(q ?? "");
 
   const mutation = useMutation({
-    mutationFn: (queryText: string) => askFn({ data: { query: queryText } }),
+    mutationFn: (queryText: string) => askFn({ data: { query: queryText, aiOverride: getAiOverride() } }),
   });
 
   const submit = (text: string) => {

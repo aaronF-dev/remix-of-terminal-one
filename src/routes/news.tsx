@@ -39,7 +39,7 @@ function NewsPage() {
   const [selected, setSelected] = useState<NewsItem | null>(null);
   const mutation = useMutation({
     mutationFn: (item: NewsItem) =>
-      explainFn({ data: { title: item.title, url: item.url, source: item.source } }),
+      explainFn({ data: { title: item.title, url: item.url, source: item.source, aiOverride: getAiOverride() } }),
   });
 
   const onSelect = (n: NewsItem) => {

@@ -31,7 +31,7 @@ function RadarPage() {
   const radarFn = useServerFn(runOpportunityRadar);
   const [query, setQuery] = useState("");
   const mutation = useMutation({
-    mutationFn: (q: string) => radarFn({ data: { query: q } }),
+    mutationFn: (q: string) => radarFn({ data: { query: q, aiOverride: getAiOverride() } }),
   });
 
   const submit = (text: string) => {
