@@ -1,3 +1,4 @@
+import { getAiOverride } from "@/lib/ai-override";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
@@ -31,7 +32,7 @@ function RadarPage() {
   const radarFn = useServerFn(runOpportunityRadar);
   const [query, setQuery] = useState("");
   const mutation = useMutation({
-    mutationFn: (q: string) => radarFn({ data: { query: q } }),
+    mutationFn: (q: string) => radarFn({ data: { query: q, aiOverride: getAiOverride() } }),
   });
 
   const submit = (text: string) => {

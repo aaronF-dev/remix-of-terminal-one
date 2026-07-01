@@ -1,3 +1,4 @@
+import { getAiOverride } from "@/lib/ai-override";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -37,7 +38,7 @@ function DnaPage() {
   });
 
   const mutation = useMutation({
-    mutationFn: () => dnaFn({ data: { symbol, name } }),
+    mutationFn: () => dnaFn({ data: { symbol, name, aiOverride: getAiOverride() } }),
   });
 
   useEffect(() => {

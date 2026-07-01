@@ -1,3 +1,4 @@
+import { getAiOverride } from "@/lib/ai-override";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
@@ -87,7 +88,7 @@ function AgentsPage() {
   const runOne = async (kind: AgentKind) => {
     setStates((s) => ({ ...s, [kind]: { status: "running" } }));
     try {
-      const data = await run({ data: { kind, symbol, name: selected?.name } });
+      const data = await run({ data: { kind, symbol, name: selected?.name, aiOverride: getAiOverride() } });
       setStates((s) => ({ ...s, [kind]: { status: "done", data } }));
       if (!("error" in data)) {
         const meta = AGENTS.find((a) => a.kind === kind);

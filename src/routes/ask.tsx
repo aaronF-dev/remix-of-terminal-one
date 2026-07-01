@@ -1,3 +1,4 @@
+import { getAiOverride } from "@/lib/ai-override";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
@@ -44,7 +45,7 @@ function AskPage() {
   const [query, setQuery] = useState(q ?? "");
 
   const mutation = useMutation({
-    mutationFn: (queryText: string) => askFn({ data: { query: queryText } }),
+    mutationFn: (queryText: string) => askFn({ data: { query: queryText, aiOverride: getAiOverride() } }),
   });
 
   const submit = (text: string) => {

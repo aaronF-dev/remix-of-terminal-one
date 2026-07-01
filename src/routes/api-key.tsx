@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Check, Eye, EyeOff, KeyRound, Loader2, Send, Trash2 } from "lucide-react";
+import { Check, Eye, EyeOff, KeyRound, Loader2, Send, Trash2, Zap } from "lucide-react";
+import { GROQ_LS_ENABLED, GROQ_LS_KEY, GROQ_LS_MODEL } from "@/lib/ai-override";
 
 export const Route = createFileRoute("/api-key")({
   component: ApiKeyPage,
@@ -32,8 +33,9 @@ const GROQ_MODELS = [
   "qwen/qwen3.6-27b",
 ] as const;
 
-const LS_KEY = "t1.groq.apiKey";
-const LS_MODEL = "t1.groq.model";
+const LS_KEY = GROQ_LS_KEY;
+const LS_MODEL = GROQ_LS_MODEL;
+const LS_ENABLED = GROQ_LS_ENABLED;
 
 type ChatMsg = { role: "user" | "assistant" | "system"; content: string };
 
@@ -43,6 +45,7 @@ function ApiKeyPage() {
   const [model, setModel] = useState<string>(GROQ_MODELS[3]);
   const [showKey, setShowKey] = useState(false);
   const [savedNote, setSavedNote] = useState(false);
+  const [useForApp, setUseForApp] = useState(false);
 
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
@@ -54,11 +57,13 @@ function ApiKeyPage() {
     try {
       const k = localStorage.getItem(LS_KEY);
       const m = localStorage.getItem(LS_MODEL);
+      const e = localStorage.getItem(LS_ENABLED);
       if (k) {
         setSavedKey(k);
         setApiKey(k);
       }
       if (m && (GROQ_MODELS as readonly string[]).includes(m)) setModel(m);
+      if (e === "1") setUseForApp(true);
     } catch {
       /* ignore */
     }
@@ -86,12 +91,24 @@ function ApiKeyPage() {
     try {
       localStorage.removeItem(LS_KEY);
       localStorage.removeItem(LS_MODEL);
+      localStorage.removeItem(LS_ENABLED);
     } catch {
       /* ignore */
     }
     setSavedKey(null);
     setApiKey("");
+    setUseForApp(false);
     setMessages([]);
+  }
+
+  function toggleUseForApp(next: boolean) {
+    setUseForApp(next);
+    try {
+      if (next) localStorage.setItem(LS_ENABLED, "1");
+      else localStorage.removeItem(LS_ENABLED);
+    } catch {
+      /* ignore */
+    }
   }
 
   function updateModel(next: string) {
@@ -244,7 +261,39 @@ function ApiKeyPage() {
             </span>
           </label>
         </div>
+
+        {/* Use-for-main-app toggle */}
+        <div className="mt-4 flex items-start justify-between gap-4 rounded-sm border border-dashed border-border bg-background/60 p-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-foreground">
+              <Zap className="size-3.5 text-amber" /> Use my Groq key for the whole app
+            </div>
+            <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+              When enabled, AI Reasoning, Compare, Company DNA, Radar, News Intel, Ask
+              Anything and AI Agents will route through your Groq model instead of Lovable
+              AI. Everything else (market data, news feeds, saved research) is unchanged.
+              Turn off to fall back to the default Lovable AI flow.
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={useForApp}
+            onClick={() => toggleUseForApp(!useForApp)}
+            disabled={!savedKey}
+            className={`relative mt-0.5 h-5 w-9 shrink-0 rounded-full border border-border transition-colors disabled:opacity-40 ${
+              useForApp ? "bg-amber" : "bg-muted"
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 size-3.5 rounded-full bg-background transition-all ${
+                useForApp ? "left-[18px]" : "left-0.5"
+              }`}
+            />
+          </button>
+        </div>
       </section>
+
 
       {/* Playground */}
       <section className="flex min-h-[420px] flex-col rounded-sm border border-border bg-card">

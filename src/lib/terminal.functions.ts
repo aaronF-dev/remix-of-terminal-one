@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
 import { z } from "zod";
-import { createLovableAiGatewayProvider } from "./ai-gateway.server";
+import { resolveAiModel } from "./ai-gateway.server";
+import { AiOverrideSchema } from "./ai-override";
 import {
   fetchCryptoQuotes,
   fetchYahooQuotes,
@@ -143,11 +144,15 @@ const AnalysisSchema = z.object({
 
 export const analyzeSymbol = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) =>
-    z.object({ symbol: z.string().min(1).max(20), name: z.string().optional() }).parse(raw),
+    z
+      .object({
+        symbol: z.string().min(1).max(20),
+        name: z.string().optional(),
+        aiOverride: AiOverrideSchema.optional(),
+      })
+      .parse(raw),
   )
   .handler(async ({ data }) => {
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
 
     const [quote, news, history] = await Promise.all([
       fetchYahooSymbol(data.symbol, data.name),
@@ -173,7 +178,7 @@ export const analyzeSymbol = createServerFn({ method: "POST" })
       .slice(0, 6);
 
     const fetchedAt = new Date().toISOString();
-    const gateway = createLovableAiGatewayProvider(apiKey);
+    const model = resolveAiModel(data.aiOverride);
 
     const historyDigest = summarizeSeries(history);
 
@@ -219,7 +224,7 @@ ${
 Produce the Terminal One analysis JSON for ${quote.name} (${quote.symbol}).`;
 
     const { text } = await generateText({
-      model: gateway("google/gemini-3-flash-preview"),
+      model,
       system: systemPrompt,
       prompt: userPrompt,
     });
@@ -262,12 +267,11 @@ export const compareSymbols = createServerFn({ method: "POST" })
     z
       .object({
         symbols: z.array(z.string().min(1).max(20)).min(2).max(4),
+        aiOverride: AiOverrideSchema.optional(),
       })
       .parse(raw),
   )
   .handler(async ({ data }) => {
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
 
     const results = await Promise.all(
       data.symbols.map(async (s) => {
@@ -290,7 +294,7 @@ export const compareSymbols = createServerFn({ method: "POST" })
     }
 
     const fetchedAt = new Date().toISOString();
-    const gateway = createLovableAiGatewayProvider(apiKey);
+    const model = resolveAiModel(data.aiOverride);
 
     const digest = valid.map((v) => ({
       symbol: v.symbol,
@@ -332,7 +336,7 @@ ${JSON.stringify(digest, null, 2)}
 Produce the comparison JSON.`;
 
     const { text } = await generateText({
-      model: gateway("google/gemini-3-flash-preview"),
+      model,
       system: systemPrompt,
       prompt: userPrompt,
     });

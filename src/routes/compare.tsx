@@ -1,3 +1,4 @@
+import { getAiOverride } from "@/lib/ai-override";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -62,7 +63,7 @@ function ComparePage() {
   const quotes = snapshot.data?.data ?? [];
 
   const mut = useMutation({
-    mutationFn: (syms: string[]) => compareFn({ data: { symbols: syms } }),
+    mutationFn: (syms: string[]) => compareFn({ data: { symbols: syms, aiOverride: getAiOverride() } }),
   });
 
   useEffect(() => {

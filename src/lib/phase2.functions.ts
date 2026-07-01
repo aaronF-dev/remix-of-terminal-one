@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
 import { z } from "zod";
-import { createLovableAiGatewayProvider } from "./ai-gateway.server";
+import { resolveAiModel } from "./ai-gateway.server";
+import { AiOverrideSchema, type AiOverride } from "./ai-override";
 import {
   fetchCryptoQuotes,
   fetchYahooQuotes,
@@ -26,17 +27,13 @@ function extractJson(raw: string): unknown {
   }
 }
 
-function gateway() {
-  const apiKey = process.env.LOVABLE_API_KEY;
-  if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
-  return createLovableAiGatewayProvider(apiKey);
-}
-
-const MODEL = "google/gemini-3-flash-preview";
-
-async function jsonModel(system: string, prompt: string): Promise<unknown> {
+async function jsonModel(
+  system: string,
+  prompt: string,
+  override?: AiOverride,
+): Promise<unknown> {
   const { text } = await generateText({
-    model: gateway()(MODEL),
+    model: resolveAiModel(override),
     system,
     prompt,
   });
@@ -66,7 +63,9 @@ export type AskAnswer = z.infer<typeof AskAnswerSchema>;
 
 export const askAnything = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) =>
-    z.object({ query: z.string().min(2).max(400) }).parse(raw),
+    z
+      .object({ query: z.string().min(2).max(400), aiOverride: AiOverrideSchema.optional() })
+      .parse(raw),
   )
   .handler(async ({ data }): Promise<{
     answer: AskAnswer;
@@ -142,7 +141,7 @@ ${
 
 Produce the JSON answer.`;
 
-    const parsed = (await jsonModel(system, prompt)) as Record<string, unknown>;
+    const parsed = (await jsonModel(system, prompt, data.aiOverride)) as Record<string, unknown>;
     const answer = AskAnswerSchema.parse({
       intent: str(parsed.intent, "general"),
       headline: str(parsed.headline, "Result"),
@@ -283,7 +282,11 @@ export type CompanyDNA = z.infer<typeof DnaSchema>;
 export const getCompanyDNA = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) =>
     z
-      .object({ symbol: z.string().min(1).max(20), name: z.string().optional() })
+      .object({
+        symbol: z.string().min(1).max(20),
+        name: z.string().optional(),
+        aiOverride: AiOverrideSchema.optional(),
+      })
       .parse(raw),
   )
   .handler(async ({ data }) => {
@@ -330,7 +333,7 @@ ${JSON.stringify(quote, null, 2)}
 
 Produce the Company DNA JSON.`;
 
-    const parsed = (await jsonModel(system, prompt)) as Record<string, unknown>;
+    const parsed = (await jsonModel(system, prompt, data.aiOverride)) as Record<string, unknown>;
     const coerceScore = (v: unknown) => {
       const o = (v ?? {}) as Record<string, unknown>;
       const sc = typeof o.score === "number" ? Math.max(0, Math.min(100, o.score)) : 50;
@@ -392,7 +395,9 @@ export type RadarResult = z.infer<typeof RadarSchema>;
 
 export const runOpportunityRadar = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) =>
-    z.object({ query: z.string().min(3).max(300) }).parse(raw),
+    z
+      .object({ query: z.string().min(3).max(300), aiOverride: AiOverrideSchema.optional() })
+      .parse(raw),
   )
   .handler(async ({ data }) => {
     const [yahoo, crypto] = await Promise.all([
@@ -431,7 +436,7 @@ ${JSON.stringify(
 
 Produce the JSON.`;
 
-    const parsed = (await jsonModel(system, prompt)) as Record<string, unknown>;
+    const parsed = (await jsonModel(system, prompt, data.aiOverride)) as Record<string, unknown>;
     const resultsRaw = Array.isArray(parsed.results) ? (parsed.results as unknown[]) : [];
     const results = resultsRaw.map((r) => {
       const o = (r ?? {}) as Record<string, unknown>;
@@ -485,6 +490,7 @@ export const explainNews = createServerFn({ method: "POST" })
         title: z.string().min(3).max(500),
         url: z.string().optional(),
         source: z.string().optional(),
+        aiOverride: AiOverrideSchema.optional(),
       })
       .parse(raw),
   )
@@ -511,7 +517,7 @@ URL: ${data.url ?? "n/a"}
 Timestamp: ${fetchedAt}
 
 Produce the JSON.`;
-    const parsed = (await jsonModel(system, prompt)) as Record<string, unknown>;
+    const parsed = (await jsonModel(system, prompt, data.aiOverride)) as Record<string, unknown>;
     const intel = NewsIntelSchema.parse({
       whatHappened: str(parsed.whatHappened),
       whyItMatters: str(parsed.whyItMatters),

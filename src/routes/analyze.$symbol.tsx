@@ -1,3 +1,4 @@
+import { getAiOverride } from "@/lib/ai-override";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -41,7 +42,7 @@ function AnalyzePage() {
   const analyzeFn = useServerFn(analyzeSymbol);
 
   const mut = useMutation({
-    mutationFn: () => analyzeFn({ data: { symbol, name } }),
+    mutationFn: () => analyzeFn({ data: { symbol, name, aiOverride: getAiOverride() } }),
   });
 
   // auto-trigger on mount / symbol change
