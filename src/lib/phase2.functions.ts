@@ -333,7 +333,7 @@ ${JSON.stringify(quote, null, 2)}
 
 Produce the Company DNA JSON.`;
 
-    const parsed = (await jsonModel(system, prompt)) as Record<string, unknown>;
+    const parsed = (await jsonModel(system, prompt, data.aiOverride)) as Record<string, unknown>;
     const coerceScore = (v: unknown) => {
       const o = (v ?? {}) as Record<string, unknown>;
       const sc = typeof o.score === "number" ? Math.max(0, Math.min(100, o.score)) : 50;
@@ -436,7 +436,7 @@ ${JSON.stringify(
 
 Produce the JSON.`;
 
-    const parsed = (await jsonModel(system, prompt)) as Record<string, unknown>;
+    const parsed = (await jsonModel(system, prompt, data.aiOverride)) as Record<string, unknown>;
     const resultsRaw = Array.isArray(parsed.results) ? (parsed.results as unknown[]) : [];
     const results = resultsRaw.map((r) => {
       const o = (r ?? {}) as Record<string, unknown>;
@@ -517,7 +517,7 @@ URL: ${data.url ?? "n/a"}
 Timestamp: ${fetchedAt}
 
 Produce the JSON.`;
-    const parsed = (await jsonModel(system, prompt)) as Record<string, unknown>;
+    const parsed = (await jsonModel(system, prompt, data.aiOverride)) as Record<string, unknown>;
     const intel = NewsIntelSchema.parse({
       whatHappened: str(parsed.whatHappened),
       whyItMatters: str(parsed.whyItMatters),
