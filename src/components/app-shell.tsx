@@ -19,6 +19,34 @@ import {
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { GROQ_LS_ENABLED, GROQ_LS_KEY, GROQ_LS_MODEL } from "@/lib/ai-override";
+
+function useActiveAiProvider() {
+  const [state, setState] = useState<{ provider: "lovable" | "groq"; model?: string }>({
+    provider: "lovable",
+  });
+  useEffect(() => {
+    const read = () => {
+      try {
+        const enabled = localStorage.getItem(GROQ_LS_ENABLED) === "1";
+        const key = localStorage.getItem(GROQ_LS_KEY);
+        const model = localStorage.getItem(GROQ_LS_MODEL) || undefined;
+        setState(enabled && key ? { provider: "groq", model } : { provider: "lovable" });
+      } catch {
+        setState({ provider: "lovable" });
+      }
+    };
+    read();
+    const onChange = () => read();
+    window.addEventListener("t1:ai-override-changed", onChange);
+    window.addEventListener("storage", onChange);
+    return () => {
+      window.removeEventListener("t1:ai-override-changed", onChange);
+      window.removeEventListener("storage", onChange);
+    };
+  }, []);
+  return state;
+}
 
 const NAV = [
   { to: "/ask", label: "Ask Anything", icon: Sparkles, group: "intel" },
