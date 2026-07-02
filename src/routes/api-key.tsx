@@ -82,6 +82,7 @@ function ApiKeyPage() {
       setSavedKey(trimmed);
       setSavedNote(true);
       setTimeout(() => setSavedNote(false), 1500);
+      window.dispatchEvent(new Event("t1:ai-override-changed"));
     } catch {
       setError("Could not save to local storage.");
     }
@@ -92,6 +93,7 @@ function ApiKeyPage() {
       localStorage.removeItem(LS_KEY);
       localStorage.removeItem(LS_MODEL);
       localStorage.removeItem(LS_ENABLED);
+      window.dispatchEvent(new Event("t1:ai-override-changed"));
     } catch {
       /* ignore */
     }
@@ -102,10 +104,30 @@ function ApiKeyPage() {
   }
 
   function toggleUseForApp(next: boolean) {
+    // Auto-save the key when enabling, so the toggle never silently no-ops
+    // if the user forgot to press Save first.
+    if (next) {
+      const trimmed = apiKey.trim();
+      if (!trimmed && !savedKey) {
+        setError("Enter your Groq API key first.");
+        return;
+      }
+      if (trimmed) {
+        try {
+          localStorage.setItem(LS_KEY, trimmed);
+          localStorage.setItem(LS_MODEL, model);
+          setSavedKey(trimmed);
+        } catch {
+          setError("Could not save to local storage.");
+          return;
+        }
+      }
+    }
     setUseForApp(next);
     try {
       if (next) localStorage.setItem(LS_ENABLED, "1");
       else localStorage.removeItem(LS_ENABLED);
+      window.dispatchEvent(new Event("t1:ai-override-changed"));
     } catch {
       /* ignore */
     }
@@ -115,6 +137,7 @@ function ApiKeyPage() {
     setModel(next);
     try {
       localStorage.setItem(LS_MODEL, next);
+      window.dispatchEvent(new Event("t1:ai-override-changed"));
     } catch {
       /* ignore */
     }
@@ -280,7 +303,7 @@ function ApiKeyPage() {
             role="switch"
             aria-checked={useForApp}
             onClick={() => toggleUseForApp(!useForApp)}
-            disabled={!savedKey}
+            disabled={!savedKey && !apiKey.trim()}
             className={`relative mt-0.5 h-5 w-9 shrink-0 rounded-full border border-border transition-colors disabled:opacity-40 ${
               useForApp ? "bg-amber" : "bg-muted"
             }`}

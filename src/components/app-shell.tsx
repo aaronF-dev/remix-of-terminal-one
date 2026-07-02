@@ -19,6 +19,34 @@ import {
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { GROQ_LS_ENABLED, GROQ_LS_KEY, GROQ_LS_MODEL } from "@/lib/ai-override";
+
+function useActiveAiProvider() {
+  const [state, setState] = useState<{ provider: "lovable" | "groq"; model?: string }>({
+    provider: "lovable",
+  });
+  useEffect(() => {
+    const read = () => {
+      try {
+        const enabled = localStorage.getItem(GROQ_LS_ENABLED) === "1";
+        const key = localStorage.getItem(GROQ_LS_KEY);
+        const model = localStorage.getItem(GROQ_LS_MODEL) || undefined;
+        setState(enabled && key ? { provider: "groq", model } : { provider: "lovable" });
+      } catch {
+        setState({ provider: "lovable" });
+      }
+    };
+    read();
+    const onChange = () => read();
+    window.addEventListener("t1:ai-override-changed", onChange);
+    window.addEventListener("storage", onChange);
+    return () => {
+      window.removeEventListener("t1:ai-override-changed", onChange);
+      window.removeEventListener("storage", onChange);
+    };
+  }, []);
+  return state;
+}
 
 const NAV = [
   { to: "/ask", label: "Ask Anything", icon: Sparkles, group: "intel" },
@@ -45,6 +73,7 @@ export function AppShell({
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const aiProvider = useActiveAiProvider();
   const initial = (user?.displayName || user?.email || "?").trim().charAt(0).toUpperCase();
 
   // Close mobile drawer on route change
@@ -168,6 +197,29 @@ export function AppShell({
             </h1>
           </div>
           <div className="flex shrink-0 items-center gap-3 text-[10px] uppercase tracking-wider text-muted-foreground sm:gap-4 sm:text-[11px]">
+            <Link
+              to="/api-key"
+              title={
+                aiProvider.provider === "groq"
+                  ? `AI provider: Groq (${aiProvider.model ?? "model"}). Click to change.`
+                  : "AI provider: Lovable AI. Click to switch to your Groq key."
+              }
+              className={`flex items-center gap-1.5 rounded-sm border px-1.5 py-0.5 font-mono text-[9px] normal-case tracking-normal transition-colors ${
+                aiProvider.provider === "groq"
+                  ? "border-amber/50 bg-amber/10 text-amber hover:bg-amber/20"
+                  : "border-border bg-background/60 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <KeyRound className="size-3" />
+              <span className="hidden sm:inline">
+                {aiProvider.provider === "groq"
+                  ? `Groq · ${(aiProvider.model ?? "").split("/").pop()?.slice(0, 14) || "model"}`
+                  : "Lovable AI"}
+              </span>
+              <span className="sm:hidden">
+                {aiProvider.provider === "groq" ? "Groq" : "LOV"}
+              </span>
+            </Link>
             <span className="flex items-center gap-1.5">
               <span className="pulse-dot" /> Live
             </span>
