@@ -303,7 +303,7 @@ function ApiKeyPage() {
             role="switch"
             aria-checked={useForApp}
             onClick={() => toggleUseForApp(!useForApp)}
-            disabled={!savedKey}
+            disabled={!savedKey && !apiKey.trim()}
             className={`relative mt-0.5 h-5 w-9 shrink-0 rounded-full border border-border transition-colors disabled:opacity-40 ${
               useForApp ? "bg-amber" : "bg-muted"
             }`}
