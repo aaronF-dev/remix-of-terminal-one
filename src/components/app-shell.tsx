@@ -73,6 +73,7 @@ export function AppShell({
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const aiProvider = useActiveAiProvider();
   const initial = (user?.displayName || user?.email || "?").trim().charAt(0).toUpperCase();
 
   // Close mobile drawer on route change
