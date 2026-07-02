@@ -137,6 +137,7 @@ function ApiKeyPage() {
     setModel(next);
     try {
       localStorage.setItem(LS_MODEL, next);
+      window.dispatchEvent(new Event("t1:ai-override-changed"));
     } catch {
       /* ignore */
     }
