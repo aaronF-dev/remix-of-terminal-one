@@ -197,6 +197,29 @@ export function AppShell({
             </h1>
           </div>
           <div className="flex shrink-0 items-center gap-3 text-[10px] uppercase tracking-wider text-muted-foreground sm:gap-4 sm:text-[11px]">
+            <Link
+              to="/api-key"
+              title={
+                aiProvider.provider === "groq"
+                  ? `AI provider: Groq (${aiProvider.model ?? "model"}). Click to change.`
+                  : "AI provider: Lovable AI. Click to switch to your Groq key."
+              }
+              className={`flex items-center gap-1.5 rounded-sm border px-1.5 py-0.5 font-mono text-[9px] normal-case tracking-normal transition-colors ${
+                aiProvider.provider === "groq"
+                  ? "border-amber/50 bg-amber/10 text-amber hover:bg-amber/20"
+                  : "border-border bg-background/60 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <KeyRound className="size-3" />
+              <span className="hidden sm:inline">
+                {aiProvider.provider === "groq"
+                  ? `Groq · ${(aiProvider.model ?? "").split("/").pop()?.slice(0, 14) || "model"}`
+                  : "Lovable AI"}
+              </span>
+              <span className="sm:hidden">
+                {aiProvider.provider === "groq" ? "Groq" : "LOV"}
+              </span>
+            </Link>
             <span className="flex items-center gap-1.5">
               <span className="pulse-dot" /> Live
             </span>
