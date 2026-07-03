@@ -26,22 +26,25 @@ operators who want an institutional cockpit without the institutional price tag.
 ## 2. Core Promise
 
 - **Never stale.** Every AI response is generated from freshly fetched data and
-  carries the timestamp of the data it used.
+carries the timestamp of the data it used.
 - **Always explainable.** Every score, signal and verdict shows its sources,
-  its reasoning and its confidence.
+its reasoning and its confidence.
 - **Modular by design.** Replace any provider, model or data source without
-  changing the UI or business logic.
+changing the UI or business logic.
+- **Model choice.** Run AI reasoning through the Lovable AI Gateway, or plug in
+your own Groq API key and model for a fully private, local-preference route.
 - **Persistent research.** Every analysis, comparison and agent run is stored
-  to the user's account in Firestore and is fully re-openable, never re-run.
+to the user's account in Firestore and is fully re-openable, never re-run.
 
 ---
 
 ## 3. Feature Map
 
 ### 3.1 Markets (Home)
-A live, scannable grid of crypto + equities. Each row shows price, % change and
-a sparkline-grade pulse. Click any symbol to deep-analyze it. Powered by
-CoinGecko (crypto) and Yahoo Finance (equities) via the data ingestion service.
+A live, scannable grid of global assets: indices, US equities, Indian equities,
+crypto, commodities and FX. Each row shows price, % change and a sparkline-grade
+pulse. Click any symbol to deep-analyze it. Powered by CoinGecko (crypto) and
+Yahoo Finance (equities) via the data ingestion service.
 
 ### 3.2 AI Reasoning — /analyze/:symbol
 A full-page reasoning view for a single asset.
@@ -109,7 +112,16 @@ A free-form intent router. The user types a question; an intent classifier
 decides whether it needs analysis, comparison, news lookup, macro context or
 direct answer, then routes accordingly.
 
-### 3.11 Authentication
+### 3.11 API Key — /api-key
+Bring your own model. Enter a Groq API key and pick from any model available
+in the Groq playground, then toggle "Use my Groq key for the whole app". All
+main AI flows (Analyze, Compare, Ask, Pulse, DNA, Radar, News and Agents) will
+route through that model instead of the default Lovable AI Gateway. The key
+is stored only in the browser's localStorage on the user's machine; the server
+never persists it. The Lovable AI path remains available at any time and is the
+fallback when the Groq override is disabled.
+
+### 3.12 Authentication
 Firebase Auth — email/password and Google. A clean split-screen sign-in page
 with a live market-chart illustration on the brand panel. All routes are gated
 by an AuthGate that redirects unauthenticated users to /login.
@@ -119,16 +131,19 @@ by an AuthGate that redirects unauthenticated users to /login.
 ## 4. User Flow
 
 1. **Land on /login.** Sign in with email/password or Google. New users tap
-   "Create one" to register.
-2. **Hit Markets.** Scan the live grid; everything is timestamped.
+"Create one" to register.
+2. **Hit Markets.** Scan the live global grid; everything is timestamped.
 3. **Pick a symbol.** Either click into AI Reasoning, drop it into Compare,
-   feed it into Agents, or view its Company DNA.
+feed it into Agents, or view its Company DNA.
 4. **Run intelligence.** Each tool returns a fully rendered, timestamped,
-   source-cited view.
-5. **Everything is saved.** Open Research at any time to reload any past
-   analysis, comparison or agent run exactly as it was generated.
-6. **Stay informed.** News Intel and Market Pulse keep the macro/headline
-   context flowing alongside whatever you're researching.
+source-cited view.
+5. **Choose your AI provider.** Go to API Key in the sidebar to route every
+AI request through your own Groq model, or leave the default Lovable AI path
+in place.
+6. **Everything is saved.** Open Research at any time to reload any past
+analysis, comparison or agent run exactly as it was generated.
+7. **Stay informed.** News Intel and Market Pulse keep the macro/headline
+context flowing alongside whatever you're researching.
 
 ---
 
@@ -141,7 +156,7 @@ well-defined interfaces. The frontend never talks to a provider directly.
 ┌─────────────────────────────────────────────────────────────┐
 │                    Frontend (React 19 + TS)                 │
 │  Markets · Analyze · Compare · Pulse · DNA · Radar · News   │
-│  Agents · Research · Ask · Auth                             │
+│  Agents · Research · Ask · API Key · Auth                   │
 └─────────────────────────────────────────────────────────────┘
                               │
                   TanStack Start server functions
@@ -162,22 +177,27 @@ well-defined interfaces. The frontend never talks to a provider directly.
 ┌─────────────────────────────────────────────────────────────┐
 │           External providers (swappable adapters)            │
 │  CoinGecko · Yahoo Finance · Google News RSS · HN Algolia   │
-│  Lovable AI Gateway (Gemini · GPT · Claude)                 │
-│  Firebase Auth · Firestore                                  │
+│  Lovable AI Gateway (Gemini · GPT · Claude)                   │
+│  Groq (user-supplied key + model) · Firebase Auth · Firestore │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ### Key principles
 - **Provider isolation.** Each upstream API sits behind an adapter in
-  `src/lib/services/*.server.ts`. Swap CoinGecko for Coinbase without
-  touching a single component.
+`src/lib/services/*.server.ts`. Swap CoinGecko for Coinbase without
+touching a single component.
+- **Dual AI routing.** `src/lib/ai-gateway.server.ts` resolves either the
+Lovable AI Gateway (default) or a user-owned Groq model via
+`@ai-sdk/openai-compatible`. Every AI server function accepts an optional
+`AiOverride` so the switch is one object away.
 - **Unified schema.** `Quote`, `NewsItem`, `DataEnvelope<T>` types in
-  `src/lib/services/types.ts` — every payload carries a `fetchedAt`.
+`src/lib/services/types.ts` — every payload carries a `fetchedAt`.
 - **Server-only secrets.** All API keys live in server functions. The browser
-  never sees them.
+never sees the server-side keys, and the user's Groq key is only stored in
+browser localStorage.
 - **Strict schemas.** AI responses are validated with Zod; malformed JSON is
-  repaired by an extractor before validation so the UI never crashes on a
-  bad model output.
+repaired by an extractor before validation so the UI never crashes on a
+bad model output.
 
 ---
 
@@ -185,19 +205,23 @@ well-defined interfaces. The frontend never talks to a provider directly.
 
 ### 6.1 Data Ingestion Service
 - **Market data**: CoinGecko (crypto quotes + historical series) and Yahoo
-  Finance (equities quotes + historicals).
+Finance (equities quotes + historicals).
 - **News**: Google News RSS across 16 curated categories + Hacker News
-  Algolia. XML is parsed server-side; URLs are deduped; up to 80 headlines.
+Algolia. XML is parsed server-side; URLs are deduped; up to 80 headlines.
 - **Sentiment**: derived from headline language and social-style sources.
 - All responses are wrapped in `DataEnvelope<T>` with `fetchedAt`.
 
 ### 6.2 AI Reasoning Service
-- Driven by the Lovable AI Gateway (Gemini 2.x / GPT / Claude — swappable).
+- Dual model router in `src/lib/ai-gateway.server.ts`: Lovable AI Gateway by
+default, or Groq when the user provides a key and model.
 - Each capability (`analyzeSymbol`, `compareSymbols`, `getMarketPulse`,
-  `getCompanyDNA`, `runOpportunityRadar`, `explainNews`, agent runners)
-  is its own `createServerFn` with its own Zod schema and prompt.
+`getCompanyDNA`, `runOpportunityRadar`, `explainNews`, agent runners,
+`askAnything`) is its own `createServerFn` with its own Zod schema and prompt.
+- Optional `AiOverride` is read from browser localStorage on the client and
+passed to every AI server function; when absent, the original Lovable AI path
+is used.
 - JSON output is hardened by an `extractJson` utility that strips markdown
-  fences and salvages partial output before Zod parsing.
+fences and salvages partial output before Zod parsing.
 - Every response carries the data timestamp it reasoned over.
 
 ### 6.3 Agents Service
@@ -209,21 +233,31 @@ Each of the 8 agents is an independent server function with:
 The orchestration layer runs them sequentially and streams results into the
 UI as they complete.
 
-### 6.4 Research Workspace Service
+### 6.4 API Key Service
+A settings-only route that lets the user:
+- type and test a Groq API key,
+- pick a model from the Groq playground list,
+- enable the key for all main AI flows.
+
+The key and selection are stored in browser localStorage only. Server
+functions receive the override as an optional input; the server never stores
+or persists the key.
+
+### 6.5 Research Workspace Service
 - Backed by Cloud Firestore at `users/{uid}/research/{id}`.
 - Each entry stores: kind (analysis | comparison | agent_run), symbol(s),
-  title, createdAt, and the **full payload** that produced the view.
+title, createdAt, and the **full payload** that produced the view.
 - The client subscribes via `onSnapshot` for real-time sync across tabs/devices.
 - Reopening an entry rehydrates the exact view — no AI re-call.
 
-### 6.5 Auth & User Service
+### 6.6 Auth & User Service
 - Firebase Authentication (email/password + Google OAuth).
 - An `AuthGate` in `__root.tsx` redirects unauthenticated traffic to
-  `/login`. Authenticated user state flows through a React context
-  (`auth-context.tsx`).
+`/login`. Authenticated user state flows through a React context
+(`auth-context.tsx`).
 - The user chip in the header reflects displayName / email and exposes logout.
 
-### 6.6 Notification & Analytics Services
+### 6.7 Notification & Analytics Services
 Stubs in place to plug alerting (price/news triggers) and product analytics
 without touching the UI.
 
@@ -242,7 +276,8 @@ without touching the UI.
 **Backend / runtime**
 - TanStack server functions running on an edge worker runtime
 - Zod for schema validation
-- Lovable AI Gateway as the model router
+- `@ai-sdk/openai-compatible` for the Lovable AI Gateway and Groq adapters
+- Lovable AI Gateway as the default model router; Groq as the user-supplied alternative
 
 **Data**
 - Firebase Authentication
@@ -259,16 +294,16 @@ without touching the UI.
 ## 8. Design System
 
 - **Aesthetic**: Bloomberg-grade dark terminal. Dense, monospaced-feeling,
-  high-contrast.
+high-contrast.
 - **Accent**: amber — used sparingly for the primary action and live signal.
 - **Tokens**: every color, surface, border and shadow is a semantic CSS
-  variable in `src/styles.css`. No hardcoded hex values in components.
+variable in `src/styles.css`. No hardcoded hex values in components.
 - **Typography**: tight uppercase tracking on labels and chrome; clean
-  sans-serif for body and numbers.
+sans-serif for body and numbers.
 - **Motion**: minimal. A pulse-dot for live state. No decorative animation.
 - **Responsiveness**: full device coverage — sidebar collapses into a
-  hamburger drawer on mobile; grids reflow to single columns; headers
-  progressively hide non-essential chrome.
+hamburger drawer on mobile; grids reflow to single columns; headers
+progressively hide non-essential chrome.
 - **Scrollbars**: globally hidden while keeping native scroll behavior.
 
 ---
@@ -277,11 +312,13 @@ without touching the UI.
 
 - Auth is enforced at the router level via the AuthGate.
 - Firestore rules scope every document to `users/{uid}/...` so users can
-  only ever read/write their own research.
+only ever read/write their own research.
 - No API keys are exposed to the client; every upstream call is proxied
-  through a server function.
+through a server function.
+- User-owned Groq keys are stored in browser localStorage only; the server never
+persists them and only uses them when explicitly passed in an AI request.
 - Schema validation on every AI response prevents prompt-injection payloads
-  from reaching the UI as executable structures.
+from reaching the UI as executable structures.
 
 ---
 
@@ -303,15 +340,18 @@ src/
 │  ├─ research.tsx          Research list
 │  ├─ research.$id.tsx      Saved-result viewer
 │  ├─ ask.tsx               Ask Anything
+│  ├─ api-key.tsx           API Key / model selector
 │  ├─ login.tsx / signup.tsx
 ├─ components/
-│  ├─ app-shell.tsx         Responsive sidebar + header
+│  ├─ app-shell.tsx         Responsive sidebar + header + AI provider badge
+│  ├─ analysis-view.tsx     Reusable analysis renderer
 │  └─ about-dialog.tsx      In-app About modal
 ├─ lib/
 │  ├─ firebase.ts           Auth + Firestore clients
 │  ├─ auth-context.tsx      React auth context
 │  ├─ research-history.ts   Firestore-backed history API
-│  ├─ ai-gateway.server.ts  Model router
+│  ├─ ai-gateway.server.ts  Lovable AI / Groq model router
+│  ├─ ai-override.ts        Shared localStorage override schema
 │  ├─ terminal.functions.ts AI Reasoning + Compare server fns
 │  ├─ phase2.functions.ts   Pulse · DNA · Radar · News · Ask
 │  ├─ agents.functions.ts   8 specialized agent runners
@@ -332,9 +372,8 @@ Every external surface is an adapter. To swap a provider:
 2. Point the relevant capability at the new adapter.
 3. Ship — no UI changes required.
 
-The same applies to the AI layer: changing the underlying model is a
-one-line change in the gateway client. The UI consumes validated schemas,
-not raw model responses.
+The same applies to the AI layer: adding a new provider is a new branch in
+`resolveAiModel()`. The UI consumes validated schemas, not raw model responses.
 
 ---
 
