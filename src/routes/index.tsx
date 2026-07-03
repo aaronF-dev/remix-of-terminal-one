@@ -342,6 +342,12 @@ function HeroAsk() {
       <h1 className="mt-1 text-2xl font-bold text-foreground sm:text-3xl">
         Ask anything. Reason across every market.
       </h1>
+      <p className="mt-1 max-w-2xl text-xs text-muted-foreground">
+        Live prices, news, and multi-agent AI reasoning across global equities,
+        crypto, FX and commodities. Use the Lovable AI Gateway by default, or go
+        to <span className="text-amber">API Key</span> in the sidebar to route
+        every AI call through your own Groq model.
+      </p>
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -395,6 +401,12 @@ function HeroAsk() {
           className="rounded-sm border border-border bg-surface-2 px-2 py-1 text-muted-foreground hover:border-amber/40 hover:text-amber"
         >
           AI Agents
+        </Link>
+        <Link
+          to="/api-key"
+          className="rounded-sm border border-amber/40 bg-amber/10 px-2 py-1 text-amber hover:bg-amber/20"
+        >
+          API Key
         </Link>
       </div>
     </section>
