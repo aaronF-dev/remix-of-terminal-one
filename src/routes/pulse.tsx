@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { Gauge, Loader2, ShieldAlert, TrendingDown, TrendingUp } from "lucide-react";
+import { getAiOverride } from "@/lib/ai-override";
 import { getMarketPulse } from "@/lib/phase2.functions";
 import { FreshnessBar, ListSection, Section } from "@/components/analysis-view";
 
@@ -28,7 +29,7 @@ function PulsePage() {
   const pulseFn = useServerFn(getMarketPulse);
   const q = useQuery({
     queryKey: ["pulse"],
-    queryFn: () => pulseFn(),
+    queryFn: () => pulseFn({ data: { aiOverride: getAiOverride() } }),
     refetchInterval: 5 * 60_000,
     staleTime: 0,
   });

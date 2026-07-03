@@ -181,8 +181,11 @@ const PulseSchema = z.object({
 });
 export type MarketPulse = z.infer<typeof PulseSchema>;
 
-export const getMarketPulse = createServerFn({ method: "GET" }).handler(
-  async (): Promise<{
+export const getMarketPulse = createServerFn({ method: "POST" })
+  .inputValidator((raw: unknown) =>
+    z.object({ aiOverride: AiOverrideSchema.optional() }).optional().default({}).parse(raw),
+  )
+  .handler(async ({ data }): Promise<{
     pulse: MarketPulse;
     quotes: Quote[];
     fetchedAt: string;
@@ -225,7 +228,7 @@ ${news.slice(0, 15).map((n) => `- ${n.title}`).join("\n")}
 
 Produce the Market Pulse JSON.`;
 
-    const parsed = (await jsonModel(system, prompt)) as Record<string, unknown>;
+    const parsed = (await jsonModel(system, prompt, data.aiOverride)) as Record<string, unknown>;
     const scoreNum =
       typeof parsed.fearGreedScore === "number"
         ? Math.max(0, Math.min(100, Math.round(parsed.fearGreedScore)))
@@ -247,8 +250,7 @@ Produce the Market Pulse JSON.`;
 
     const sources = ["yahoo_finance", "coingecko", "hn_algolia"];
     return { pulse, quotes: all, fetchedAt, sources };
-  },
-);
+  });
 
 // ─────────────────────────── Company DNA ───────────────────────────
 const DnaScoreSchema = z.object({
